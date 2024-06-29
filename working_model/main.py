@@ -42,23 +42,23 @@ class PodcastCrew:
         wiki_data = ""
         try:
             wiki_data = scrape_wikipedia(self.topic)
+            self.conversation.append(f"Background data: {wiki_data}")
         except:
             wiki_data = ""
         print(wiki_data)
-        self.conversation.append(f"Background data: {wiki_data}\n")
 
         # Introduction
         intro_task = tasks.task1_intro(host, self.topic)
         crew = Crew(agents=[host], tasks=[intro_task])
         intro_response = crew.kickoff()
-        self.conversation.append(f"\nHost: {intro_response}")
+        self.conversation.append(f"Host: {intro_response}")
         print(f"Host: {intro_response}")
 
         # Overview
         overview_task = tasks.task2_overview(expert, self.topic)
         crew = Crew(agents=[expert], tasks=[overview_task])
         overview_response = crew.kickoff()
-        self.conversation.append(f"\nExpert: {overview_response}")
+        self.conversation.append(f"Expert: {overview_response}")
         print(f"Expert: {overview_response}")
 
         # Main discussion
@@ -68,7 +68,7 @@ class PodcastCrew:
             host_task.description += f" Current conversation: {self.conversation}"
             crew = Crew(agents=[host], tasks=[host_task])
             host_response = crew.kickoff()
-            self.conversation.append(f"\nHost: {host_response}")
+            self.conversation.append(f"Host: {host_response}")
             print(f"Host: {host_response}")
 
             if await self.handle_listener_interaction(expert):
@@ -79,7 +79,7 @@ class PodcastCrew:
             expert_task.description += f" Current conversation: {self.conversation}"
             crew = Crew(agents=[expert], tasks=[expert_task])
             expert_response = crew.kickoff()
-            self.conversation.append(f"\nExpert: {expert_response}")
+            self.conversation.append(f"Expert: {expert_response}")
             print(f"Expert: {expert_response}")
 
             if await self.handle_listener_interaction(expert):
@@ -95,7 +95,7 @@ class PodcastCrew:
         listener_input = input("\nDo you want to ask a question or comment? (y/n): ")
         if listener_input.lower() == 'y':
             question = input("Your question/comment: ")
-            self.conversation.append(f"\nListener: {question}")
+            self.conversation.append(f"Listener: {question}")
             
             answer_task = Task(
                 description=f"Answer the listener's question/comment: {question}. Current conversation: {self.conversation}",
