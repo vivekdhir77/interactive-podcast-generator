@@ -1,0 +1,6 @@
+crewai
+dotenv
+requests
+crewai_tools
+bs4
+langchain_google_genai

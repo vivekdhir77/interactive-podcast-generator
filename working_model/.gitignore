@@ -1,0 +1,6 @@
+.env
+__pycache__/
+.DStore
+venv/
+trained_agents_data.pkl
+x.py
