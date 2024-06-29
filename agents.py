@@ -16,7 +16,6 @@ load_dotenv()
 
 search_tool = SerperDevTool()
 
-# Initialize the LLM
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", verbose=True, temperature=0.5, google_api_key=os.getenv("GOOGLE_API_KEY"))
 
 
@@ -154,7 +153,6 @@ def handle_listener_interaction(conversation, current_host):
         return True
     return False
 
-# The main function can remain the same
 async def main():
     duration = int(input("Enter the desired podcast duration in minutes: "))
     conversation = await simulate_podcast(duration)
