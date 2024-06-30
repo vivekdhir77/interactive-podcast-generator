@@ -10,7 +10,7 @@ A peron- Domain Expert
 
 """
 class PodcastAgents:
-    def __init__(self, domain="Science, mathematics, and technology"):
+    def init(self, domain="Science, mathematics, and technology"):
         self.domain = domain
         self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", verbose=True, temperature=0.8, google_api_key=os.getenv("GEMINI_API_KEY"))
 
