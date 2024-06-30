@@ -3,15 +3,15 @@ from crewai import Task
 class PodcastTasks:
     def task1_intro(self, agent, topic):
         return Task(
-            description=f'Introduce yourself with a random name. Do Host introduction of the show and interesting applications of the {topic}',
-            expected_output=f'A brief introduction of the podcast show where complex topics are explained in simple terms by an expert and a compelling overview of interesting applications of the {topic}',
+            description=f'Introduce yourself with a Doctor + random name. Do Host introduction of the show and interesting applications of the {topic}. Not more than 5 sentences.',
+            expected_output=f'A brief introduction of the podcast show where complex topics are explained in simple terms by an expert and a compelling overview of interesting applications of the {topic}. Not more than 5 sentences.',
             agent=agent
         )
 
     def task2_overview(self, agent, topic, conversation_history=""):
         return Task(
-            description=f'Introduce yourself with a random name. Provide a high-level overview of the {topic} and a brief overview of what will be discussed',
-            expected_output=f'A concise overview of the {topic} and an outline of the main points to be discussed',
+            description=f'Introduce yourself with a Doctor + random name. Provide a high-level overview of the {topic} and a brief overview of what will be discussed. Not more than 5 sentences.',
+            expected_output=f'A concise overview of the {topic} and an outline of the main points to be discussed. Not more than 5 sentences.',
             agent=agent,
             # context={"conversation_history": conversation_history} # tried to rectify this but doesn't worl
         )
