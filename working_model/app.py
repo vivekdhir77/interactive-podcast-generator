@@ -137,10 +137,9 @@ class PodcastCrew:
             await self.websocket.send_bytes(audio_file.read())
 
     async def handle_listener_question(self, question):
-        
         self.conversation = self.conversation[:-1]
         answer_task = Task(
-            description=f"Answer the listener's question: {question}. Current conversation: {self.conversation[:self.conversation_idx]}",
+            description=f"Don't answer any other listener's question except this one latest listener's question: {question}. Current conversation: {self.conversation[:self.conversation_idx]}",
             agent=self.expert,
             expected_output="A clear and concise answer to the listener's question, relating it to the ongoing discussion"
         )
@@ -150,7 +149,17 @@ class PodcastCrew:
         self.conversation.append(f"\nListener: {question}")
         self.conversation.append(f"Expert: {answer}")
         self.conversation_idx += 1
-        return answer
+
+        # Generate the next part of the conversation immediately
+        host_task = self.tasks.task3_host(self.host, self.topic)
+        host_task.description += f" Current conversation: {self.conversation}"
+        crew = Crew(agents=[self.host], tasks=[host_task])
+        host_response = crew.kickoff()
+        await self.save_and_send_audio(host_response, "host", f"{self.conversation_idx}.mp3")
+        self.conversation.append(f"\nHost: {host_response}")
+        self.conversation_idx += 1
+
+        return answer, host_response
 
 @app.websocket("/generate-podcast")
 async def generate_podcast(websocket: WebSocket):
@@ -182,8 +191,11 @@ async def ask_question(request: QuestionRequest):
     if global_podcast_crew is None:
         return {"error": "No active podcast session"}
     
-    answer = await global_podcast_crew.handle_listener_question(request.question)
-    return {"answer": answer}
+    answer, host_response = await global_podcast_crew.handle_listener_question(request.question)
+    return {
+        "answer": answer,
+        "next_host": host_response,
+    }
 
 if __name__ == "__main__":
     import uvicorn

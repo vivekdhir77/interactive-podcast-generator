@@ -19,11 +19,13 @@ class TextToSpeech:
         self.engine.runAndWait()
 
     def save_audio_expert(self, text, output_file_path):
-        self.set_rate(125)
+        self.set_rate(150)
         self.set_volume(1.0)
         self.set_voice(1)  # female
 
         text = text.replace('*', '')
+        text = text.replace("Host:", "")
+        text = text.replace("Expert:", "")
         self.save_audio(text, output_file_path)
 
     def save_audio_host(self, text, output_file_path):
@@ -31,6 +33,8 @@ class TextToSpeech:
         self.set_volume(1.0)
         self.set_voice(0)  # male
         text = text.replace('*', '')
+        text = text.replace("Host:", "")
+        text = text.replace("Expert:", "")
         self.save_audio(text, output_file_path)
 
 # Example usage:

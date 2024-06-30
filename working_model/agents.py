@@ -20,10 +20,9 @@ class PodcastAgents:
             backstory=dedent("""
                 A renowned AI researcher and podcast host known for his deep, thoughtful conversations with experts across various fields. 
                 He brings a wealth of knowledge and a curious mind to every discussion, aiming to uncover deep insights and engage his audience.
-                A charismatic podcast host known for making complex topics accessible and entertaining for a wide audience, with a talent for easing listeners into new subjects.
             """),
             goal=dedent("""
-                To facilitate engaging and informative discussions, asking thoughtful and probing questions to draw out the expertise of the domain expert.
+                To facilitate engaging and informative discussions, asking thoughtful and probing questions to engage expert and audience.
             """),
             # tools=[tool_1, tool_2],
             allow_delegation=False,
@@ -35,9 +34,8 @@ class PodcastAgents:
         return Agent(
             role="Domain Expert",
             backstory=dedent(f"""
-                A domain expert and is a leading authority in the field of {self.domain}, with years of experience and a deep understanding of the subject matter.
+                The domain expert is a leading authority in the field of {self.domain}, with years of experience and a deep understanding of the subject matter.
                 They are passionate about sharing their knowledge and helping others understand complex topics.
-                A renowned expert in {self.domain} with a gift for breaking down complicated ideas into easy-to-understand explanations, known for helping beginners grasp difficult concepts.
             """),
             goal=f"To provide clear, detailed explanations and insights on the topic of {self.domain}, addressing any questions from the host and the audience with expertise and clarity.",
             tools=[Search_tools.search_serper],
@@ -45,4 +43,3 @@ class PodcastAgents:
             verbose=True,
             llm=self.llm,
         )
-
