@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
@@ -135,37 +135,32 @@ async def ask_question(request: QuestionRequest):
     conversation.append(f"{'Ezio'}: {answer}")
     return {"answer": f"{'Ezio'}: {answer}"}
 
-@app.websocket("/transcribe/")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+@app.post("/transcribe/")
+async def transcribe_audio(file: UploadFile = File(...)):
     r = sr.Recognizer()
     audio_buffer = io.BytesIO()
 
     try:
-        while True:
-            data = await websocket.receive_bytes()
-            audio_buffer.write(data)
-            if len(data) < 4096: 
-                break
-
+        audio_buffer.write(await file.read())
         audio_buffer.seek(0)
         audio_segment = AudioSegment.from_file(audio_buffer)
         audio_segment = audio_segment.set_channels(1).set_frame_rate(16000)
         pcm_wav = io.BytesIO()
         audio_segment.export(pcm_wav, format="wav")
         pcm_wav.seek(0)
-
         with sr.AudioFile(pcm_wav) as source:
             audio_data = r.record(source)
 
         text = r.recognize_google(audio_data)
-        await websocket.send_json({"transcription": text})
+        print(text)
+        return JSONResponse(content={"transcription": text})
+    
     except sr.UnknownValueError:
-        await websocket.send_json({"error": "Google Speech Recognition could not understand audio"})
+        raise HTTPException(status_code=400, detail="Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
-        await websocket.send_json({"error": f"Could not request results from Google Speech Recognition service; {e}"})
+        raise HTTPException(status_code=500, detail=f"Could not request results from Google Speech Recognition service; {e}")
     except Exception as e:
-        await websocket.send_json({"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
