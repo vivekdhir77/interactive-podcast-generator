@@ -4,3 +4,6 @@ requests
 crewai_tools
 bs4
 langchain_google_genai
+fastapi
+speech_recognition
+pydub

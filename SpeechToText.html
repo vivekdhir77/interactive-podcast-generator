@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition</title>
+</head>
+<body>
+    <h1>Speech Recognition</h1>
+    <button id="startButton">Start Transcription</button>
+    <button id="stopButton" disabled>Stop Transcription</button>
+    <p id="result"></p>
+
+    <script>
+        let mediaRecorder;
+        let websocket;
+        const resultElement = document.getElementById('result');
+
+        document.getElementById('startButton').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            websocket = new WebSocket("ws://127.0.0.1:8000/ws/transcribe/");
+
+            websocket.onopen = () => {
+                mediaRecorder.start(250); // Chunk length in milliseconds
+                document.getElementById('startButton').disabled = true;
+                document.getElementById('stopButton').disabled = false;
+                resultElement.innerText = "Recording...";
+            };
+
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.transcription) {
+                    resultElement.innerText = `Transcription: ${data.transcription}`;
+                } else if (data.error) {
+                    resultElement.innerText = `Error: ${data.error}`;
+                }
+            };
+
+            websocket.onerror = (error) => {
+                resultElement.innerText = `WebSocket error: ${error.message}`;
+            };
+
+            websocket.onclose = () => {
+                resultElement.innerText = "Connection closed";
+            };
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    websocket.send(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                websocket.send(new Blob([])); // Send an empty blob to indicate end of stream
+                websocket.close();
+            };
+        });
+
+        document.getElementById('stopButton').addEventListener('click', () => {
+            mediaRecorder.stop();
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+        });
+    </script>
+</body>
+</html>
