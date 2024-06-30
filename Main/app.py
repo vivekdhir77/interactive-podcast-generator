@@ -1,30 +1,23 @@
-<<<<<<< HEAD:app.py
 from fastapi import FastAPI, HTTPException, UploadFile, File
-=======
 import asyncio
-from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
->>>>>>> f703f2f39f5c921dcaab65e33bd90189f57674ce:Main/app.py
 from pydantic import BaseModel
 import asyncio
 from crewai import Agent, Task, Crew
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
-<<<<<<< HEAD
 import pyttsx3
 from bs4 import BeautifulSoup
 import requests
-=======
 from dotenv import load_dotenv
 from fastapi import WebSocket
 from fastapi.responses import JSONResponse
 import speech_recognition as sr
 import io
 from pydub import AudioSegment
->>>>>>> c06b6ce464d54edcf2c4f9d14e7e562e97664a3d
 
 load_dotenv()
 

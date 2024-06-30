@@ -13,6 +13,11 @@ from tts import TextToSpeech
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import speech_recognition as sr
+from fastapi import HTTPException, UploadFile, File
+from fastapi.responses import JSONResponse
+import io
+from pydub import AudioSegment
 
 load_dotenv()
 
@@ -200,6 +205,33 @@ async def ask_question(request: QuestionRequest):
         "answer": answer,
         "next_host": host_response,
     }
+
+@app.post("/transcribe/")
+async def transcribe_audio(file: UploadFile = File(...)):
+    r = sr.Recognizer()
+    audio_buffer = io.BytesIO()
+
+    try:
+        audio_buffer.write(await file.read())
+        audio_buffer.seek(0)
+        audio_segment = AudioSegment.from_file(audio_buffer)
+        audio_segment = audio_segment.set_channels(1).set_frame_rate(16000)
+        pcm_wav = io.BytesIO()
+        audio_segment.export(pcm_wav, format="wav")
+        pcm_wav.seek(0)
+        with sr.AudioFile(pcm_wav) as source:
+            audio_data = r.record(source)
+
+        text = r.recognize_google(audio_data)
+        print(text)
+        return JSONResponse(content={"transcription": text})
+    
+    except sr.UnknownValueError:
+        raise HTTPException(status_code=400, detail="Google Speech Recognition could not understand audio")
+    except sr.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"Could not request results from Google Speech Recognition service; {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
