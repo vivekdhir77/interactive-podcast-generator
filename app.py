@@ -1,46 +1,51 @@
-import asyncio
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
-from sse_starlette.sse import EventSourceResponse
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
-from typing import List, Optional
-import uvicorn
+import asyncio
 from crewai import Agent, Task, Crew
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
-from dotenv import load_dotenv
+import pyttsx3
+from bs4 import BeautifulSoup
+import requests
 
 load_dotenv()
 
 app = FastAPI()
 
-origins = ["*"]
+# Initialize TTS engine
+engine = pyttsx3.init()
+engine.setProperty('rate', 125)
+engine.setProperty('volume', 1.0)
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)  # Female voice
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Initialize the LLM
+# Initialize LLM
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", verbose=True, temperature=0.5, google_api_key=os.getenv("GOOGLE_API_KEY"))
 
-class PodcastRequest(BaseModel):
-    topic: str
-    duration: int
-
-class QuestionRequest(BaseModel):
-    question: str
-
+# Global variables
 conversation = []
-current_host = None
+current_speaker = None
+topic = ""
+
+class PodcastStart(BaseModel):
+    duration: int
+    topic: str
+
+def scrape_wikipedia(topic):
+    url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        content = soup.find(id="mw-content-text")
+        paragraphs = content.find_all('p')
+        text = '\n'.join([p.get_text() for p in paragraphs[:5]])  # Limit to first 5 paragraphs
+        return text
+    else:
+        return f"Failed to retrieve the page. Status code: {response.status_code}"
 
 def assign_roles(topic):
     conversationalist = Agent(
-        name="Engaging Host",
         role="Engaging Conversationalist",
         goal=f"Gradually introduce the topic of {topic}, explain its relevance, and facilitate an engaging discussion.",
         backstory="A charismatic podcast host known for making complex topics accessible and entertaining for a wide audience.",
@@ -50,7 +55,6 @@ def assign_roles(topic):
     )
 
     expert = Agent(
-        name="Expert Host",
         role="Topic Expert",
         goal=f"Provide an overview of {topic}, gradually increasing in depth. Explain the importance of the topic before delving into more complex aspects.",
         backstory=f"A renowned expert in {topic} with a gift for breaking down complicated ideas into easy-to-understand explanations.",
@@ -61,74 +65,106 @@ def assign_roles(topic):
 
     return conversationalist, expert
 
-async def generate_podcast_content(topic: str, duration: int):
-    global conversation, current_host
+@app.post("/start-podcast")
+async def start_podcast(podcast_data: PodcastStart):
+    global conversation, current_speaker, topic
+    topic = podcast_data.topic
     conversation = []
+    current_speaker = "host"
+    
     conversationalist, expert = assign_roles(topic)
-    start_time = asyncio.get_event_loop().time()
-    end_time = start_time + (duration * 60)
+    data = scrape_wikipedia(topic)
+    conversation.append(f"Factual data: {data}")
 
-    # Introduction phase
     intro_task = Task(
         description=f"Welcome the audience and introduce the topic of {topic}. Explain why this topic is relevant and interesting.",
-        agent=conversationalist,
-        expected_output="A welcoming introduction that sets the stage for the podcast and explains the topic's relevance"
+        agent=conversationalist
     )
     crew = Crew(agents=[conversationalist], tasks=[intro_task])
     intro_response = crew.kickoff()
-    conversation.append(f"Engaging Host: {intro_response}")
-    yield f"Engaging Host: {intro_response}\n"
+    
+    # Generate and save audio
+    engine.save_to_file(intro_response, 'intro.mp3')
+    engine.runAndWait()
 
-    # Expert overview
-    overview_task = Task(
-        description=f"Provide a high-level overview of {topic}. Explain its basic concepts and why it's important.",
-        agent=expert,
-        expected_output="A clear, beginner-friendly overview of the topic that sets the foundation for deeper discussion"
+    return {"message": "Podcast started successfully"}
+
+@app.get("/host")
+async def host_response():
+    global conversation, current_speaker
+    if current_speaker != "host":
+        raise HTTPException(status_code=400, detail="It's not the host's turn")
+
+    conversationalist, _ = assign_roles(topic)
+    host_task = Task(
+        description=f"Continue the discussion on {topic}, ask thought-provoking questions or provide interesting perspectives. Current conversation: {conversation}",
+        agent=conversationalist
     )
-    crew = Crew(agents=[expert], tasks=[overview_task])
-    overview_response = crew.kickoff()
-    conversation.append(f"Expert Host: {overview_response}")
-    yield f"Expert Host: {overview_response}\n"
+    crew = Crew(agents=[conversationalist], tasks=[host_task])
+    response = crew.kickoff()
+    conversation.append(f"Host: {response}")
+    current_speaker = "expert"
 
-    # Main discussion
-    while asyncio.get_event_loop().time() < end_time:
-        for host, name in [[conversationalist, "Claudio"],  [expert,"Ezio"]]:
-            current_host = host
-            task = Task(
-                description=f"Continue the discussion on {topic}, increasing in depth. Respond to previous comments if applicable. Current conversation: {conversation}",
-                agent=host,
-                expected_output="An engaging paragraph that continues the discussion while ensuring the conversation remains accessible"
-            )
-            crew = Crew(agents=[host], tasks=[task])
-            response = crew.kickoff()
-            conversation.append(f"{name}: {response}")
-            yield f"{name}: {response}\n"
+    # Generate and save audio
+    engine.save_to_file(response, 'host_response.mp3')
+    engine.runAndWait()
 
-            if asyncio.get_event_loop().time() >= end_time:
-                break
+    return response
 
-    yield "END_OF_PODCAST"
+@app.get("/expert")
+async def expert_response():
+    global conversation, current_speaker
+    if current_speaker != "expert":
+        raise HTTPException(status_code=400, detail="It's not the expert's turn")
 
-@app.post("/generate-podcast")
-async def generate_podcast(request: PodcastRequest):
-    return EventSourceResponse(generate_podcast_content(request.topic, request.duration))
+    _, expert = assign_roles(topic)
+    expert_task = Task(
+        description=f"Delve deeper into {topic}, explaining complex concepts. Respond to the Host's comments or questions. Current conversation: {conversation}",
+        agent=expert
+    )
+    crew = Crew(agents=[expert], tasks=[expert_task])
+    response = crew.kickoff()
+    conversation.append(f"Expert: {response}")
+    current_speaker = "host"
 
-@app.post("/ask-question")
-async def ask_question(request: QuestionRequest):
-    global conversation, current_host
-    if not current_host:
-        return {"error": "No active podcast session"}
+    # Generate and save audio
+    engine.save_to_file(response, 'expert_response.mp3')
+    engine.runAndWait()
 
-    conversation.append(f"Listener: {request.question}")
+    return response
+
+@app.post("/listener")
+async def listener_interruption(audio: UploadFile = File(...)):
+    global conversation, current_speaker
+    
+    # Here you would process the audio file and convert it to text
+    # For this example, we'll just use a dummy text
+    question = "This is a dummy question from the listener"
+
+    conversation.append(f"Listener: {question}")
+    
+    # Remove the last host/expert response
+    if len(conversation) > 1:
+        conversation.pop(-2)
+
+    # Determine which agent should answer based on the current_speaker
+    agent_role = "expert" if current_speaker == "host" else "host"
+    agent = assign_roles(topic)[0] if agent_role == "host" else assign_roles(topic)[1]
+
     answer_task = Task(
-        description=f"Answer the listener's question: {request.question}. Current conversation: {conversation}",
-        agent=current_host,
-        expected_output="A clear and concise answer to the listener's question, relating it to the ongoing discussion"
+        description=f"Answer the listener's question: {question}. Current conversation: {conversation}",
+        agent=agent
     )
-    crew = Crew(agents=[current_host], tasks=[answer_task])
+    crew = Crew(agents=[agent], tasks=[answer_task])
     answer = crew.kickoff()
-    conversation.append(f"{'Ezio'}: {answer}")
-    return {"answer": f"{'Ezio'}: {answer}"}
+    conversation.append(f"{agent_role.capitalize()}: {answer}")
+
+    # Generate and save audio
+    engine.save_to_file(answer, 'listener_response.mp3')
+    engine.runAndWait()
+
+    return {"response": answer}
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

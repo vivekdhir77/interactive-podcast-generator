@@ -18,7 +18,6 @@ search_tool = SerperDevTool()
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", verbose=True, temperature=0.5, google_api_key=os.getenv("GOOGLE_API_KEY"))
 
-
 def scrape_wikipedia(topic):
     url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
     response = requests.get(url)
@@ -27,14 +26,9 @@ def scrape_wikipedia(topic):
         content = soup.find(id="mw-content-text")
         paragraphs = content.find_all('p')
         text = '\n'.join([p.get_text() for p in paragraphs])
-
-
         return text
     else:
         return f"Failed to retrieve the page. Status code: {response.status_code}"
-        
-        
-    
 
 def assign_roles(topic):
     # web_tools.append(search_tool)

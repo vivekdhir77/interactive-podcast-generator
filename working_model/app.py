@@ -137,6 +137,8 @@ class PodcastCrew:
             await self.websocket.send_bytes(audio_file.read())
 
     async def handle_listener_question(self, question):
+        
+        self.conversation = self.conversation[:-1]
         answer_task = Task(
             description=f"Answer the listener's question: {question}. Current conversation: {self.conversation[:self.conversation_idx]}",
             agent=self.expert,
