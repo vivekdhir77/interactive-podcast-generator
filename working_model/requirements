@@ -1,5 +1,5 @@
 crewai
-dotenv
+python-dotenv
 requests
 crewai_tools
 bs4
