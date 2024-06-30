@@ -9,8 +9,11 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from tts import TextToSpeech
 
 load_dotenv()
+
+
 def scrape_wikipedia(topic):
     url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
     response = requests.get(url)
@@ -30,6 +33,8 @@ class PodcastCrew:
         self.conversation = []
         self.start_time = datetime.now()
         self.end_time = self.start_time + timedelta(minutes=duration_minutes)
+        self.tts = TextToSpeech()
+        self.conversation_idx = 0
 
     async def run(self):
         agents = PodcastAgents()
@@ -53,14 +58,17 @@ class PodcastCrew:
         intro_response = crew.kickoff()
         self.conversation.append(f"\nHost: {intro_response}")
         print(f"Host: {intro_response}")
-
+        self.tts.save_audio_host(intro_response, f"{self.conversation_idx}.mp3")
+        self.conversation_idx += 1
         # Overview
         overview_task = tasks.task2_overview(expert, self.topic)
         crew = Crew(agents=[expert], tasks=[overview_task])
         overview_response = crew.kickoff()
         self.conversation.append(f"\nExpert: {overview_response}")
         print(f"Expert: {overview_response}")
-
+        self.tts.save_audio_expert(overview_response, f"{self.conversation_idx}.mp3")
+        self.conversation_idx += 1
+        
         # Main discussion
         while datetime.now() < self.end_time:
             # Host's turn
@@ -70,6 +78,8 @@ class PodcastCrew:
             host_response = crew.kickoff()
             self.conversation.append(f"\nHost: {host_response}")
             print(f"Host: {host_response}")
+            self.tts.save_audio_host(intro_response, f"{self.conversation_idx}.mp3")
+            self.conversation_idx += 1
 
             if await self.handle_listener_interaction(expert):
                 continue
@@ -81,6 +91,8 @@ class PodcastCrew:
             expert_response = crew.kickoff()
             self.conversation.append(f"\nExpert: {expert_response}")
             print(f"Expert: {expert_response}")
+            self.tts.save_audio_expert(overview_response, f"{self.conversation_idx}.mp3")
+            self.conversation_idx += 1
 
             if await self.handle_listener_interaction(expert):
                 continue
@@ -106,6 +118,8 @@ class PodcastCrew:
             answer = crew.kickoff()
             self.conversation.append(f"Expert: {answer}")
             print(f"Expert: {answer}")
+            self.tts.save_audio_expert(answer, f"{self.conversation_idx}.mp3")
+            self.conversation_idx+=1
             return True
         return False
 

@@ -18,7 +18,7 @@ class PodcastTasks:
 
     def task3_host(self, agent, topic, conversation_history=""):
         return Task(
-            description=f"Gradually move the conversation to the depth of the {topic}. Ask a thought-provoking question or share interesting perspectives on the expert's explanation in brief words without answering listener's questions",
+            description=f"Gradually move the conversation to the depth of the {topic}. Ask a thought-provoking question or share interesting perspectives like Lex Fridman and Joe Rogan in brief words.  If applicable, respond to the Expert's previous comments in brief words without answering listener's questions. Be like Lex Fridman and Joe Rogan.",
             expected_output="A series of thoughtful questions and brief perspectives that engage the domain expert and deepen the discussion",
             agent=agent,
             # context=[conversation_history]  
@@ -28,7 +28,7 @@ class PodcastTasks:
         return Task(
             description=f"""
             Continue the explanation of {topic}, building upon the overview previously provided.
-            1. Address any questions or comments from the host.
+            1. Respond to the Engaging Host's comments or questions, always ensuring explanations remain clear and digestible.
             2. Introduce and explain one new concept or aspect of {topic} in depth.
             3. Use clear, concise language suitable for a general audience.
             4. Provide real-world examples or analogies to illustrate complex ideas.
@@ -41,7 +41,8 @@ class PodcastTasks:
             A detailed explanation of one aspect of {topic} that:
             - Responds to any previous host comments or questions
             - Introduces and thoroughly explains a new concept
-            - Uses clear language and illustrative examples
+            - Provides increasingly detailed expert knowledge while simplifying complex ideas
+            - Uses clear language and examples to make it easy for listener to visualize in mind
             - Connects the explanation to the broader topic
             - Ends at a point that invites further discussion or questions
             """,
