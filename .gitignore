@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 /MeloTTS
 .env
 /all-podcasts-datase
 /crew
 /all-podcasts-dataset
 /data.csv
+=======
+venv/
+>>>>>>> c06b6ce464d54edcf2c4f9d14e7e562e97664a3d

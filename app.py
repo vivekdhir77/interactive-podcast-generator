@@ -5,9 +5,18 @@ from crewai import Agent, Task, Crew
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
+<<<<<<< HEAD
 import pyttsx3
 from bs4 import BeautifulSoup
 import requests
+=======
+from dotenv import load_dotenv
+from fastapi import WebSocket
+from fastapi.responses import JSONResponse
+import speech_recognition as sr
+import io
+from pydub import AudioSegment
+>>>>>>> c06b6ce464d54edcf2c4f9d14e7e562e97664a3d
 
 load_dotenv()
 
@@ -164,6 +173,39 @@ async def listener_interruption(audio: UploadFile = File(...)):
     engine.runAndWait()
 
     return {"response": answer}
+
+@app.websocket("/transcribe/")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    r = sr.Recognizer()
+    audio_buffer = io.BytesIO()
+
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            audio_buffer.write(data)
+            if len(data) < 4096: 
+                break
+
+        audio_buffer.seek(0)
+        audio_segment = AudioSegment.from_file(audio_buffer)
+        audio_segment = audio_segment.set_channels(1).set_frame_rate(16000)
+        pcm_wav = io.BytesIO()
+        audio_segment.export(pcm_wav, format="wav")
+        pcm_wav.seek(0)
+
+        with sr.AudioFile(pcm_wav) as source:
+            audio_data = r.record(source)
+
+        text = r.recognize_google(audio_data)
+        await websocket.send_json({"transcription": text})
+    except sr.UnknownValueError:
+        await websocket.send_json({"error": "Google Speech Recognition could not understand audio"})
+    except sr.RequestError as e:
+        await websocket.send_json({"error": f"Could not request results from Google Speech Recognition service; {e}"})
+    except Exception as e:
+        await websocket.send_json({"error": str(e)})
+
 
 if __name__ == "__main__":
     import uvicorn
