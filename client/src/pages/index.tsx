@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import TranscriptionComponent from '../components/ui/TranscriptionComponent';
+
 
 export default function Home() {
   const [topic, setTopic] = useState('');
@@ -28,6 +30,7 @@ export default function Home() {
 
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
+    
 
     while (true) {
       const { value, done } = await reader.read();
@@ -56,7 +59,9 @@ export default function Home() {
     setPodcastContent((prev) => [...prev, `Listener: ${question}`, data.answer]);
     setQuestion('');
   };
-
+  const handleTranscription = (transcription: string) => {
+    setQuestion(transcription);
+  };
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">AI Podcast Generator</h1>
@@ -87,6 +92,7 @@ export default function Home() {
           <p key={index}>{content}</p>
         ))}
       </div>
+      <TranscriptionComponent/>
       <div className="flex">
         <Input
           type="text"
