@@ -1,7 +1,7 @@
 # Learn hands free
+<img src="Assets/brain-storming-1.png" alt="Brainstorming" width="350" style="display: inline-block;">
+<img src="Assets/Brain-Storming.png" alt="Brainstorming" width="350" style="display: inline-block;">
 
-<img src="Assets/brain-storming-1.png" alt="Brainstorming" width="350">
-<img src="Assets/Brain-Storming.png" alt="Brainstorming" width="350">
 
 
 ## Problem We Face Everyday
