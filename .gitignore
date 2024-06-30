@@ -5,6 +5,7 @@
 /crew
 /all-podcasts-dataset
 /data.csv
+*.mp3
 =======
 venv/
 >>>>>>> c06b6ce464d54edcf2c4f9d14e7e562e97664a3d
