@@ -6,3 +6,4 @@
 /data.csv
 node_modules
 venv/
+.next
