@@ -137,7 +137,10 @@ class PodcastCrew:
             await self.websocket.send_bytes(audio_file.read())
 
     async def handle_listener_question(self, question):
-        self.conversation = self.conversation[:-1]
+        try:
+            self.conversation = self.conversation[:-2]
+        except:
+            self.conversation = self.conversation[:-1]
         print("question: ", question)
         answer_task = Task(
             description=f"Don't answer any other listener's question except this one latest listener's question: {question}. Current conversation: {self.conversation[:self.conversation_idx]}",

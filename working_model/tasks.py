@@ -18,8 +18,8 @@ class PodcastTasks:
 
     def task3_host(self, agent, topic, conversation_history=""):
         return Task(
-            description=f"Gradually move the conversation to the depth of the {topic}. Ask a thought-provoking question or share interesting perspectives on the expert's explanation in brief words like Lex Fridman and Joe Rogan without answering listener's questions. Ensure the conversation remains accessible. ",
-            expected_output="Brief natural sentences that continue the discussion, possibly with a thought-provoking question to deepen the discussion, while ensuring the conversation remains accessible.",
+            description=f"Ask a thought-provoking question or share interesting perspectives on the expert's explanation in brief words like Lex Fridman and Joe Rogan without answering listener's questions. ",
+            expected_output="Concise natural sentences that reply to expert's latest response, possibly with a thought-provoking question.",
             agent=agent,
             # context=[conversation_history]
         )
@@ -28,7 +28,7 @@ class PodcastTasks:
         return Task(
             description=f"""
             Continue the explanation of {topic}, building upon the overview previously provided.
-            1. Address any questions or comments from the host.
+            1. Address any question or comment from the host.
             2. Introduce and explain one new concept or aspect of {topic} in depth.
             3. Use clear, concise language suitable for a general audience.
             4. Provide real-world examples or analogies to illustrate complex ideas.

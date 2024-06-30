@@ -26,7 +26,6 @@ const TranscriptionComponent = () => {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        // Ensure correct content type is set
                         'Accept': 'application/json',
                     },
                 });
