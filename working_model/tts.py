@@ -1,3 +1,4 @@
+# !pip install transformers soundfile torch datasets 
 import pyttsx3
 from transformers import pipeline
 from datasets import load_dataset
