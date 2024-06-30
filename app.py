@@ -135,11 +135,6 @@ async def ask_question(request: QuestionRequest):
     conversation.append(f"{'Ezio'}: {answer}")
     return {"answer": f"{'Ezio'}: {answer}"}
 
-# backend.py
-
-
-app = FastAPI()
-
 @app.websocket("/transcribe/")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -171,10 +166,6 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.send_json({"error": f"Could not request results from Google Speech Recognition service; {e}"})
     except Exception as e:
         await websocket.send_json({"error": str(e)})
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
