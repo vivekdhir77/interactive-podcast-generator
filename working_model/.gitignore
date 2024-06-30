@@ -4,3 +4,4 @@ __pycache__/
 venv/
 trained_agents_data.pkl
 x.py
+/working_model/podcast_audio
