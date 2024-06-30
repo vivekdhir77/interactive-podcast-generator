@@ -1,8 +1,21 @@
 import pyttsx3
+from transformers import pipeline
+from datasets import load_dataset
+import soundfile as sf
+import torch
+
+
+# You can replace this embedding with your own as well.
+
+
+
 
 class TextToSpeech:
     def __init__(self):
         self.engine = pyttsx3.init()
+        self.synthesiser = pipeline("text-to-speech", "microsoft/speecht5_tts")
+        self.embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
+        self.speaker_embedding = torch.tensor(self.embeddings_dataset[7306]["xvector"]).unsqueeze(0)
         
     def set_rate(self, rate):
         self.engine.setProperty('rate', rate)
@@ -19,14 +32,18 @@ class TextToSpeech:
         self.engine.runAndWait()
 
     def save_audio_expert(self, text, output_file_path):
-        self.set_rate(150)
-        self.set_volume(1.0)
-        self.set_voice(1)  # female
+        # self.set_rate(150)
+        # self.set_volume(1.0)
+        # self.set_voice(1)  # female
 
-        text = text.replace('*', '')
-        text = text.replace("Host:", "")
-        text = text.replace("Expert:", "")
-        self.save_audio(text, output_file_path)
+        # text = text.replace('*', '')
+        # text = text.replace("Host:", "")
+        # text = text.replace("Expert:", "")
+        # self.save_audio(text, output_file_path)
+        speech = self.synthesiser(text, forward_params={"speaker_embeddings": self.speaker_embedding})
+        sf.write( output_file_path, speech["audio"], samplerate=speech["sampling_rate"])
+
+
 
     def save_audio_host(self, text, output_file_path):
         self.set_rate(125)
